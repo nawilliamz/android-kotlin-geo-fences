@@ -32,7 +32,14 @@ import androidx.lifecycle.ViewModel
  * the Home action will cause the state to be saved, even if the game is terminated by Android in
  * the background.
  */
+
+//SavedStateHandle is a handle to saved state passed into a view model. You should use SavedStateViewModelFactory
+//if you want to receive this object in the view model constructor.
+//SavedStateHandle is a key-value map that will let you write and retrieve objects to and from the
+//saved state. So here we're using a map reather than an array to store state values
 class GeofenceViewModel(state: SavedStateHandle) : ViewModel() {
+
+    //Track all of the goefences in play for your app.
     private val _geofenceIndex = state.getLiveData(GEOFENCE_INDEX_KEY, -1)
     private val _hintIndex = state.getLiveData(HINT_INDEX_KEY, 0)
     val geofenceIndex: LiveData<Int>

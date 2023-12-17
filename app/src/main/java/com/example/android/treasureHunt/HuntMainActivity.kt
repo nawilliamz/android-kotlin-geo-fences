@@ -60,11 +60,14 @@ class HuntMainActivity : AppCompatActivity() {
     private lateinit var geofencingClient: GeofencingClient
     private lateinit var viewModel: GeofenceViewModel
 
+
     private val runningQOrLater =
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
     // A PendingIntent for the Broadcast Receiver that handles geofence transitions.
     private val geofencePendingIntent: PendingIntent by lazy {
+
+        //GeofenceBroadcastReceive is
         val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
         intent.action = ACTION_GEOFENCE_EVENT
         // Use FLAG_UPDATE_CURRENT so that you get the same pending intent back when calling
@@ -79,6 +82,7 @@ class HuntMainActivity : AppCompatActivity() {
             this)).get(GeofenceViewModel::class.java)
         binding.viewmodel = viewModel
         binding.lifecycleOwner = this
+        //Create instance of GeofencingClient to access the location APIs
         geofencingClient = LocationServices.getGeofencingClient(this)
 
         // Create channel for notifications
@@ -251,6 +255,7 @@ class HuntMainActivity : AppCompatActivity() {
 
         // Else request the permission
         // this provides the result[LOCATION_PERMISSION_INDEX]
+
         var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
 
         val resultCode = when {
@@ -277,7 +282,13 @@ class HuntMainActivity : AppCompatActivity() {
      * is now "active."
      */
     private fun addGeofenceForClue() {
+
+        //Check if you have any active geofences for your treasure hunt. If you already do, then you
+        //shouldn't add another. After all, you only want them looking for one treasure at a time.
         if (viewModel.geofenceIsActive()) return
+        //Find out the current geofence index using the view model. If the current index is greater than
+        //the number of landmarks, remove geofences, call geofenceActivated on the new model, and then
+        //return.
         val currentGeofenceIndex = viewModel.nextGeofenceIndex()
         if(currentGeofenceIndex >= GeofencingConstants.NUM_LANDMARKS) {
             removeGeofences()
@@ -319,6 +330,22 @@ class HuntMainActivity : AppCompatActivity() {
             // Regardless of success/failure of the removal, add the new geofence
             addOnCompleteListener {
                 // Add the new geofence request with the new geofence
+                if (ActivityCompat.checkSelfPermission(
+                        this@HuntMainActivity,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return@addOnCompleteListener
+                }
+
+                //Add the new geofence here
                 geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
                     addOnSuccessListener {
                         // Geofences added.
@@ -335,7 +362,7 @@ class HuntMainActivity : AppCompatActivity() {
                         Toast.makeText(this@HuntMainActivity, R.string.geofences_not_added,
                             Toast.LENGTH_SHORT).show()
                         if ((it.message != null)) {
-                            Log.w(TAG, it.message)
+                            Log.w(TAG, it.message!!)
                         }
                     }
                 }
